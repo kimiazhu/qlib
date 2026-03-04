@@ -128,26 +128,56 @@ class YahooCollector(BaseCollector):
 
         def _show_logging_func():
             if interval == YahooCollector.INTERVAL_1min and show_1min_logging:
-                logger.warning(f"{error_msg}:{_resp}")
+                logger.warning(f"{error_msg}: empty response")
 
         interval = "1m" if interval in ["1m", "1min"] else interval
         try:
-            _resp = Ticker(symbol, asynchronous=False).history(interval=interval, start=start, end=end)
-            if isinstance(_resp, pd.DataFrame):
-                return _resp.reset_index()
-            elif isinstance(_resp, dict):
-                _temp_data = _resp.get(symbol, {})
-                if isinstance(_temp_data, str) or (
-                    isinstance(_resp, dict) and _temp_data.get("indicators", {}).get("quote", None) is None
-                ):
-                    _show_logging_func()
-            else:
+            # Bypass yahooquery and directly fetch chart data using v8 endpoint
+            import requests
+            import pandas as pd
+            import time
+
+            # Convert start and end timestamps to UNIX seconds for Yahoo Finance API
+            period1 = int(pd.Timestamp(start).timestamp())
+            period2 = int(pd.Timestamp(end).timestamp())
+            
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval={interval}&period1={period1}&period2={period2}"
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+            
+            resp = requests.get(url, headers=headers, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            
+            result = data.get("chart", {}).get("result", None)
+            if not result:
                 _show_logging_func()
+                return pd.DataFrame()
+                
+            res = result[0]
+            timestamps = res.get("timestamp", [])
+            if not timestamps:
+                _show_logging_func()
+                return pd.DataFrame()
+                
+            quote = res.get("indicators", {}).get("quote", [{}])[0]
+            adjclose = res.get("indicators", {}).get("adjclose", [{}])[0].get("adjclose", quote.get("close"))
+            
+            df = pd.DataFrame(quote)
+            df['date'] = pd.to_datetime(pd.Series(timestamps), unit='s').dt.strftime('%Y-%m-%d')
+            df['adjclose'] = adjclose
+            df['symbol'] = symbol
+            
+            # Format to match yahooquery output for compatibility
+            # ['symbol', 'date', 'open', 'high', 'low', 'close', 'volume', 'adjclose']
+            df = df.reindex(columns=['symbol', 'date', 'open', 'high', 'low', 'close', 'volume', 'adjclose'])
+            return df
+            
         except Exception as e:
             logger.warning(
-                f"get data error: {symbol}--{start}--{end}"
-                + "Your data request fails. This may be caused by your firewall (e.g. GFW). Please switch your network if you want to access Yahoo! data"
+                f"get data error: {symbol}--{start}--{end}. "
+                f"Your data request fails. This may be caused by your firewall (e.g. GFW). Error: {e}"
             )
+            return pd.DataFrame()
 
     def get_data(
         self, symbol: str, interval: str, start_datetime: pd.Timestamp, end_datetime: pd.Timestamp

@@ -79,11 +79,17 @@ def get_calendar_list(bench_code="CSI300") -> List[pd.Timestamp]:
             calendar = df.index.get_level_values(level="date").map(pd.Timestamp).unique().tolist()
         else:
             if bench_code.upper() == "ALL":
-                import akshare as ak  # pylint: disable=C0415
+                import requests
 
-                trade_date_df = ak.tool_trade_date_hist_sina()
-                trade_date_list = trade_date_df["trade_date"].tolist()
-                trade_date_list = [pd.Timestamp(d) for d in trade_date_list]
+                period1 = 946684800
+                period2 = int(pd.Timestamp.today().timestamp())
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/000001.SS?interval=1d&period1={period1}&period2={period2}"
+                headers = {'User-Agent': 'Mozilla/5.0'}
+                res = requests.get(url, headers=headers, timeout=10)
+                res.raise_for_status()
+                timestamps = res.json()["chart"]["result"][0]["timestamp"]
+                trade_date_list = [pd.Timestamp(t, unit="s").normalize() for t in timestamps]
+                trade_date_list = sorted(list(set(trade_date_list)))
                 dates = pd.DatetimeIndex(trade_date_list)
                 filtered_dates = dates[(dates >= "2000-01-04") & (dates <= pd.Timestamp.today().normalize())]
                 calendar = filtered_dates.tolist()
@@ -187,37 +193,43 @@ def get_hs_stock_symbols() -> list:
         -------
             {600000.ss, 600001.ss, 600002.ss, 600003.ss, ...}
         """
-        # url = "http://99.push2.eastmoney.com/api/qt/clist/get?pn=1&pz=10000&po=1&np=1&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12"
 
-        base_url = "http://99.push2.eastmoney.com/api/qt/clist/get"
+        base_url = "http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData"
         params = {
-            "pn": 1,  # page number
-            "pz": 100,  # page size, default to 100
-            "po": 1,
-            "np": 1,
-            "fs": "m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048",
-            "fields": "f12",
+            "page": 1,
+            "num": 100,
+            "sort": "symbol",
+            "asc": 1,
+            "node": "hs_a",
+            "symbol": "",
+            "_s_r_a": "page"
         }
 
         _symbols = []
         page = 1
 
         while True:
-            params["pn"] = page
+            params["page"] = page
             try:
                 resp = requests.get(base_url, params=params, timeout=None)
                 resp.raise_for_status()
-                data = resp.json()
 
-                # Check if response contains valid data
-                if not data or "data" not in data or not data["data"] or "diff" not in data["data"]:
-                    logger.warning(f"Invalid response structure on page {page}")
+                import json
+                try:
+                    data = json.loads(resp.text)
+                except Exception:
+                    # In case of invalid JSON, extract codes via regex
+                    import re
+                    codes = re.findall(r'"code":"(\d{6})"', resp.text)
+                    data = [{"code": c} for c in codes]
+
+                if not data:
+                    logger.info(f"Last page reached: {page - 1}")
                     break
 
-                # fetch the current page data
-                current_symbols = [_v["f12"] for _v in data["data"]["diff"]]
+                current_symbols = [_v["code"] for _v in data]
 
-                if not current_symbols:  # It's the last page if there is no data in current page
+                if not current_symbols:
                     logger.info(f"Last page reached: {page - 1}")
                     break
 
@@ -229,8 +241,6 @@ def get_hs_stock_symbols() -> list:
                 )
 
                 page += 1
-
-                # sleep time to avoid overloading the server
                 time.sleep(0.5)
 
             except requests.exceptions.HTTPError as e:
@@ -238,11 +248,11 @@ def get_hs_stock_symbols() -> list:
                     f"Request to {base_url} failed with status code {resp.status_code}"
                 ) from e
             except Exception as e:
-                logger.warning("An error occurred while extracting data from the response.")
+                logger.warning(f"An error occurred while extracting data from the response: {e}")
                 raise
 
         if len(_symbols) < 3900:
-            raise ValueError("The complete list of stocks is not available.")
+            raise ValueError(f"The complete list of stocks is not available. Found only {len(_symbols)}.")
 
         # Add suffix after the stock code to conform to yahooquery standard, otherwise the data will not be fetched.
         _symbols = [
