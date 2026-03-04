@@ -8,6 +8,9 @@ from __future__ import print_function
 import numpy as np
 import pandas as pd
 import copy
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+
 from ...utils import get_or_create_path
 from ...log import get_module_logger
 
@@ -71,7 +74,12 @@ class LSTM(Model):
         self.early_stop = early_stop
         self.optimizer = optimizer.lower()
         self.loss = loss
-        self.device = torch.device("cuda:%d" % (GPU) if torch.cuda.is_available() and GPU >= 0 else "cpu")
+        if torch.cuda.is_available() and GPU >= 0:
+            self.device = torch.device("cuda:%d" % (GPU))
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available() and GPU >= 0:
+            self.device = torch.device("mps")
+        else:
+            self.device = torch.device("cpu")
         self.n_jobs = n_jobs
         self.seed = seed
 
@@ -161,11 +169,11 @@ class LSTM(Model):
         self.LSTM_model.train()
 
         for data, weight in data_loader:
-            feature = data[:, :, 0:-1].to(self.device)
-            label = data[:, -1, -1].to(self.device)
+            feature = data[:, :, 0:-1].float().to(self.device)
+            label = data[:, -1, -1].float().to(self.device)
 
-            pred = self.LSTM_model(feature.float())
-            loss = self.loss_fn(pred, label, weight.to(self.device))
+            pred = self.LSTM_model(feature)
+            loss = self.loss_fn(pred, label, weight.float().to(self.device))
 
             self.train_optimizer.zero_grad()
             loss.backward()
@@ -179,12 +187,12 @@ class LSTM(Model):
         losses = []
 
         for data, weight in data_loader:
-            feature = data[:, :, 0:-1].to(self.device)
+            feature = data[:, :, 0:-1].float().to(self.device)
             # feature[torch.isnan(feature)] = 0
-            label = data[:, -1, -1].to(self.device)
+            label = data[:, -1, -1].float().to(self.device)
 
-            pred = self.LSTM_model(feature.float())
-            loss = self.loss_fn(pred, label, weight.to(self.device))
+            pred = self.LSTM_model(feature)
+            loss = self.loss_fn(pred, label, weight.float().to(self.device))
             losses.append(loss.item())
 
             score = self.metric_fn(pred, label)
@@ -284,10 +292,10 @@ class LSTM(Model):
         preds = []
 
         for data in test_loader:
-            feature = data[:, :, 0:-1].to(self.device)
+            feature = data[:, :, 0:-1].float().to(self.device)
 
             with torch.no_grad():
-                pred = self.LSTM_model(feature.float()).detach().cpu().numpy()
+                pred = self.LSTM_model(feature).detach().cpu().numpy()
 
             preds.append(pred)
 
