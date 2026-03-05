@@ -58,6 +58,23 @@ python3 scripts/dump_bin.py dump_all \
 1. **生成 `instruments` 和 `calendars`**：遍历所有日期和股票名，提取出交易日历表（如 `day.txt` 包括了所有的真实交易日）及成分股生命周期（如 `all.txt` 包括每只股从起跑到退市所覆盖的起止时间）。
 2. **特征列存储（Column-store）转化**：Qlib 会采用 `numpy` 对标准化后的数据按列进行切割。这就意味着同一支股票中的 Open、Close、Volume 会被分别存成 `open.bin`、`close.bin`、`volume.bin` 等独立的文件。这是 Qlib 回测极速的关键（底层利用 `mmap` 进行内存映射）。
 
+3. 更新其他指数列表：
+
+先安装好baostock： `pip install baostock`
+然后再更新：
+
+```bash
+# 更新沪深300 (CSI300)
+python3 scripts/data_collector/cn_index/collector.py \
+    --index_name CSI300 \
+    --qlib_dir ~/.qlib/qlib_data/cn_data \
+    --method parse_instruments
+# 更新中证500 (CSI500)
+python3 scripts/data_collector/cn_index/collector.py \
+    --index_name CSI500 \
+    --qlib_dir ~/.qlib/qlib_data/cn_data \
+    --method parse_instruments
+```
 ---
 
 **3. 在你的模型中运用新数据**

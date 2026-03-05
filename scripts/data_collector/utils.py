@@ -66,8 +66,12 @@ def get_calendar_list(bench_code="CSI300") -> List[pd.Timestamp]:
 
     logger.info(f"get calendar list: {bench_code}......")
 
-    def _get_calendar(url):
-        _value_list = requests.get(url, timeout=None).json()["data"]["klines"]
+    def _get_calendar(*args):
+        import baostock as bs
+        bs.login()
+        _df = bs.query_trade_dates(start_date="2005-01-01", end_date="2099-12-31").get_data()
+        bs.logout()
+        _value_list = _df[_df["is_trading_day"] == "1"]["calendar_date"].to_list()
         return sorted(map(lambda x: pd.Timestamp(x.split(",")[0]), _value_list))
 
     calendar = _CALENDAR_MAP.get(bench_code, None)
@@ -79,8 +83,6 @@ def get_calendar_list(bench_code="CSI300") -> List[pd.Timestamp]:
             calendar = df.index.get_level_values(level="date").map(pd.Timestamp).unique().tolist()
         else:
             if bench_code.upper() == "ALL":
-                import requests
-
                 period1 = 946684800
                 period2 = int(pd.Timestamp.today().timestamp())
                 url = f"https://query1.finance.yahoo.com/v8/finance/chart/000001.SS?interval=1d&period1={period1}&period2={period2}"
