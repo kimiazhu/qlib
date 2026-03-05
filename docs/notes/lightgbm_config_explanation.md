@@ -1,15 +1,3 @@
-# Chat Conversation
-
-Note: _This is purely the output of the chat conversation and does not contain any raw data, codebase snippets, etc. used to generate the output._
-
-### User Input
-
-在benchmarks/LightGBM/workflow_config_lightgbm_Alpha158.yaml配置中，详细解释这份配置文件，另外，我现在已经处理好了一份更完整的数据，我应该如何使用这份数据进行训练和回测？
-
-*Viewed [workflow_config_lightgbm_Alpha158.yaml](file:///home/kc/Development/qlib/qlib/examples/benchmarks/LightGBM/workflow_config_lightgbm_Alpha158.yaml) *
-
-### Planner Response
-
 这份 [workflow_config_lightgbm_Alpha158.yaml](cci:7://file:///home/kc/Development/qlib/qlib/examples/benchmarks/LightGBM/workflow_config_lightgbm_Alpha158.yaml:0:0-0:0) 是 Qlib 中非常经典且标准的一个完整工作流配置文件。它定义了从**数据读取 -> 特征及标签构建 -> 模型训练 -> 预测结果评估 -> 策略回测**的完整流程。
 
 下面为你分模块对这个预设文件进行详细解读：

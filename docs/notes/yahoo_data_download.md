@@ -18,7 +18,7 @@
 
 ```bash
 # 由于 end 属于左闭右开区间，如果要获取到 2026-03-03 的数据，结尾需要设置到后一天 2026-03-04
-python scripts/data_collector/yahoo/collector.py download_data \
+python3 scripts/data_collector/yahoo/collector.py download_data \
     --source_dir ~/.qlib/stock_data/source/cn_data \
     --start 2000-01-01 \
     --end 2026-03-04 \
@@ -32,7 +32,7 @@ python scripts/data_collector/yahoo/collector.py download_data \
 股票的纯原始价格无法直接用于量化分析，因为随着派息或分红，价格会出现断层跳空，我们需要将其抹平。
 
 ```bash
-python scripts/data_collector/yahoo/collector.py normalize_data \
+python3 scripts/data_collector/yahoo/collector.py normalize_data \
     --source_dir ~/.qlib/stock_data/source/cn_data \
     --normalize_dir ~/.qlib/stock_data/source/cn_1d_nor \
     --region CN \
@@ -47,7 +47,7 @@ Qlib 是依靠一种特殊的列式存储来实现高速读取的，需要将 CS
 
 ```bash
 # 将转储的最终结果直接存入 Qlib 的默认数据存放路径（假设为 ~/.qlib/qlib_data/cn_data）
-python scripts/dump_bin.py dump_all \
+python3 scripts/dump_bin.py dump_all \
     --data_path ~/.qlib/stock_data/source/cn_1d_nor \
     --qlib_dir ~/.qlib/qlib_data/cn_data \
     --freq day \
