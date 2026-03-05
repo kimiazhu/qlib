@@ -58,14 +58,14 @@ task:
             d_feat: 20
             hidden_size: 64
             num_layers: 2
-            dropout: 0.0
+            dropout: 0.1
             n_epochs: 200
-            lr: 1e-3
-            early_stop: 10
-            batch_size: 800
+            lr: 1e-4
+            early_stop: 20
+            batch_size: 600
             metric: loss
             loss: mse
-            n_jobs: 0
+            n_jobs: 20
             GPU: 0
     dataset:
         class: TSDatasetH
