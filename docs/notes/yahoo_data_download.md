@@ -66,9 +66,16 @@ python3 scripts/dump_bin.py dump_all \
 ```bash
 # 更新沪深300 (CSI300)
 python3 scripts/data_collector/cn_index/collector.py \
+    --index_name CSI100 \
+    --qlib_dir ~/.qlib/qlib_data/cn_data \
+    --method parse_instruments
+
+# 更新沪深300 (CSI300)
+python3 scripts/data_collector/cn_index/collector.py \
     --index_name CSI300 \
     --qlib_dir ~/.qlib/qlib_data/cn_data \
     --method parse_instruments
+
 # 更新中证500 (CSI500)
 python3 scripts/data_collector/cn_index/collector.py \
     --index_name CSI500 \
