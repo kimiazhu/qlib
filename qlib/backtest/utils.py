@@ -128,7 +128,20 @@ class TradeCalendarManager:
         if trade_step is None:
             trade_step = self.get_trade_step()
         calendar_index = self.start_index + trade_step - shift
-        return self._calendar[calendar_index], epsilon_change(self._calendar[calendar_index + 1])
+        
+        start_time = self._calendar[calendar_index]
+        if calendar_index + 1 < len(self._calendar):
+            end_time = self._calendar[calendar_index + 1]
+        else:
+            # Estimate the next end time if it exceeds the calendar length
+            # Use the previous step interval to guess the frequency (usually 1 day)
+            if calendar_index > 0:
+                time_diff = self._calendar[calendar_index] - self._calendar[calendar_index - 1]
+            else:
+                time_diff = pd.Timedelta(days=1)
+            end_time = self._calendar[calendar_index] + time_diff
+            
+        return start_time, epsilon_change(end_time)
 
     def get_data_cal_range(self, rtype: str = "full") -> Tuple[int, int]:
         """

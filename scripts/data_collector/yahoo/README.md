@@ -159,10 +159,20 @@ pip install -r requirements.txt
        ```
 
 ### Automatic update of daily frequency data(from yahoo finance)
-  > It is recommended that users update the data manually once (--trading_date 2021-05-25) and then set it to update automatically.
+  > It is recommended that users either use the convenient wrapped script `daily_update.py` or manually control the pipeline through `update_data_to_bin` in `collector.py`.
   >
-  > **NOTE**: Users can't incrementally  update data based on the offline data provided by Qlib(some fields are removed to reduce the data size). Users should use [yahoo collector](https://github.com/microsoft/qlib/tree/main/scripts/data_collector/yahoo#automatic-update-of-daily-frequency-datafrom-yahoo-finance) to download Yahoo data from scratch and then incrementally update it.
+  > **NOTE**: Users can't incrementally update data based on the offline data provided by Qlib(some fields are removed to reduce the data size). Users should use [yahoo collector](https://github.com/microsoft/qlib/tree/main/scripts/data_collector/yahoo#automatic-update-of-daily-frequency-datafrom-yahoo-finance) to download Yahoo data from scratch and then incrementally update it.
   > 
+
+  * **Recommended: Automatic daily update using `daily_update.py`**
+      > This script automatically parses the binary `calendars/day.txt` to find the last fetched date, downloads from Yahoo Finance up to today, appends the CSVs, normalizes, and re-dumps binaries + instruments.
+      ```bash
+      python scripts/data_collector/yahoo/daily_update.py --source_dir ~/.qlib/stock_data/source/cn_data --qlib_data_dir ~/.qlib/qlib_data/cn_data --region CN
+      ```
+      * `source_dir`: The directory containing existing downloaded CSVs (e.g. cn_data)
+      * `qlib_data_dir`: The directory containing existing dumped Qlib binary files
+      * `normalize_dir`: Temporary directory used to store normalized increments
+      * `region`: The market region (e.g. "CN", "US", "BR", "IN")
 
   * Automatic update of data to the "qlib" directory each trading day(Linux)
       * use *crontab*: `crontab -e`

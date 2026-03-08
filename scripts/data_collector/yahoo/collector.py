@@ -561,6 +561,9 @@ class YahooNormalize1dExtend(YahooNormalize1d):
         qlib.init(provider_uri=qlib_data_dir, expression_cache=None, dataset_cache=None)
         df = D.features(D.instruments("all"), ["$" + col for col in self.column_list])
         df.columns = self.column_list
+        # HUGE memory optimization: We only need the latest row for each instrument to align the adjustment factors
+        # Without this, multiprocessing pickle/serialization of this DataFrame per-file takes 20+ seconds!
+        df = df.groupby(level="instrument").tail(1)
         return df
 
     def normalize(self, df: pd.DataFrame) -> pd.DataFrame:
