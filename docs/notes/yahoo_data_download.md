@@ -21,11 +21,18 @@
 python3 scripts/data_collector/yahoo/collector.py download_data \
     --source_dir ~/.qlib/stock_data/source/cn_data \
     --start 2000-01-01 \
-    --end 2026-03-04 \
-    --delay 1 \
+    --end 2026-03-09 \
+    --delay 0.1 \
     --interval 1d \
-    --region CN
+    --region CN \
+    --max_workers 16
 ```
+
+或者更多线程下载:
+```bash
+python3 ~/Development/qlib/qlib/scripts/data_collector/yahoo/daily_update.py --source_dir ~/.qlib/stock_data_0309/source/cn_data --qlib_data_dir ~/.qlib/qlib_data_0309/cn_data --region CN --max_workers 16
+```
+
 *这会在指定的 `source_dir` 下为每一只股票下载包含高（High）、开（Open）、低（Low）、收（Close）、成交量（Volume）和复权收盘价（Adj Close）等基础字段的 CSV 原始文件。*
 
 ### Step 2: 数据的标准化与复权处理 (Normalize Data)

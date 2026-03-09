@@ -1,5 +1,5 @@
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/cn_data"
+    provider_uri: "~/.qlib/qlib_data_0309/cn_data"
     region: cn
     workers: 1
 
@@ -60,7 +60,8 @@ task:
             segments:
                 train: [2008-01-01, 2019-12-31]
                 valid: [2020-01-01, 2021-12-31]
-                test: [2023-01-01, 2025-12-31]
+                test: [2026-01-01, 2026-03-09]
+                #test: [2023-01-01, 2025-12-31]
     record:
         - class: SignalRecord
           module_path: qlib.workflow.record_temp
