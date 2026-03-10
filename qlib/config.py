@@ -31,6 +31,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class MLflowSettings(BaseSettings):
+    model_config = SettingsConfigDict(protected_namespaces=())
     uri: str = "file:" + str(Path(os.getcwd()).resolve() / "mlruns")
     default_exp_name: str = "Experiment"
 
@@ -54,6 +55,7 @@ class QSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="QLIB_",
         env_nested_delimiter="_",
+        protected_namespaces=(),
     )
 
 
