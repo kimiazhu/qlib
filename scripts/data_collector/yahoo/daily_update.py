@@ -101,19 +101,20 @@ def update_daily_data(
     dump_update.dump()
     
     # Update instruments
-    logger.info("Updating indices (instruments)...")
-    region_lower = region.lower()
-    if region_lower in ["cn", "us"]:
-        import importlib
-        index_list = ["CSI100", "CSI300"] if region_lower == "cn" else ["SP500", "NASDAQ100", "DJIA", "SP400"]
-        try:
-            get_instruments = getattr(
-                importlib.import_module(f"data_collector.{region_lower}_index.collector"), "get_instruments"
-            )
-            for _index in index_list:
-                get_instruments(str(qlib_data_dir), _index, market_index=f"{region_lower}_index")
-        except Exception as e:
-            logger.warning(f"Failed to update indices: {e}")
+    # DO NOT update instruments for now, these operations need to be done manually
+    # logger.info("Updating indices (instruments)...")
+    # region_lower = region.lower()
+    # if region_lower in ["cn", "us"]:
+    #     import importlib
+    #     index_list = ["CSI100", "CSI300"] if region_lower == "cn" else ["SP500", "NASDAQ100", "DJIA", "SP400"]
+    #     try:
+    #         get_instruments = getattr(
+    #             importlib.import_module(f"data_collector.{region_lower}_index.collector"), "get_instruments"
+    #         )
+    #         for _index in index_list:
+    #             get_instruments(str(qlib_data_dir), _index, market_index=f"{region_lower}_index")
+    #     except Exception as e:
+    #         logger.warning(f"Failed to update indices: {e}")
     
     logger.info(f"[{datetime.datetime.now()}] Daily update successfully completed.")
 
